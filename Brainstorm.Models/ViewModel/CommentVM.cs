@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +11,7 @@ namespace Brainstorm.Models.ViewModel
     {
         public Comment comment { get; set; }
         public Idea idea { get; set; }
+        [ValidateNever]
         public string ViewComment { get; set; }
     }
 }
