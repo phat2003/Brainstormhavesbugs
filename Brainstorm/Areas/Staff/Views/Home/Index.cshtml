@@ -1,0 +1,90 @@
+﻿@using Microsoft.AspNetCore.Identity
+@model IEnumerable<IdeaVM>
+@inject UserManager<IdentityUser> UserManager
+
+<div class="container py-4" style="max-width: 600px;">
+    <h2 class="mb-4 text-primary">Bảng Tin Ý Tưởng</h2>
+    @foreach (var idea in Model)
+    {
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <img src="https://ui-avatars.com/api/?name=@idea.idea.ApplicationUser.UserName&background=random"
+                         class="rounded-circle me-2" width="40" height="40" alt="avatar" />
+                    <div>
+                        <strong>@idea.idea.ApplicationUser.UserName</strong><br />
+                        <small class="text-muted">@idea.idea.CreatedDate.ToString("dd/MM/yyyy")</small>
+                    </div>
+                </div>
+                <p class="card-text fs-5">@idea.idea.Text</p>
+                <div class="mb-2">
+
+                    <span class="badge bg-secondary">Lượt xem: @(idea.ViewCount)</span>
+                </div>
+                <div>
+
+
+
+                    @if (idea.react == null || idea.react.ReactValue != 1)
+                    {
+                    <form asp-area="Staff" asp-controller="Home" asp-action="ReactToIdea" method="post" style="display:inline;">
+                        <input type="hidden" name="ideaId" value="@idea.idea.Id" />
+                        <input type="hidden" name="reactValue" value="1" />
+                        <button type="submit" class="btn btn-outline-success btn-sm">
+                            (@idea.LikeCount)👍 Thích
+                        </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-area="Staff" asp-controller="Home" asp-action="ReactToIdea" method="post" style="display:inline;">
+                            <input type="hidden" name="ideaId" value="@idea.idea.Id" />
+                            <input type="hidden" name="reactValue" value="1" />
+                            <button type="submit" class="btn btn-outline-success btn-sm">
+                                (@idea.LikeCount)👍 Bỏ Thích
+                            </button>
+                        </form>
+                    }
+
+                    @if (idea.react == null || idea.react.ReactValue != -1)
+                    {
+                    <form asp-area="Staff" asp-controller="Home" asp-action="ReactToIdea" method="post" style="display:inline;">
+                        <input type="hidden" name="ideaId" value="@idea.idea.Id" />
+                        <input type="hidden" name="reactValue" value="-1" />
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                            (@idea.DislikeCount)👎 Không thích
+                        </button>
+                    </form>
+                    }
+                    else
+                    {
+                        <form asp-area="Staff" asp-controller="Home" asp-action="ReactToIdea" method="post" style="display:inline;">
+                            <input type="hidden" name="ideaId" value="@idea.idea.Id" />
+                            <input type="hidden" name="reactValue" value="-1" />
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                (@idea.DislikeCount)👎 Bỏ Không thích
+                            </button>
+                        </form>
+                    }
+
+                    <button class="btn btn-outline-secondary btn-sm" >
+                        <a asp-controller="Comment" asp-action="Index" class="btn btn-primary">
+                            <i class="bi bi-chat-dots"></i> Bình luận
+                        </a>
+                        
+                    </button>
+
+                    <form asp-action="Views" method="post">
+                        <input type="hidden" name="IdeaId" value="@idea.idea.Id" />
+
+                        <input type="hidden" name="VisitTime" value="1" />
+
+                        <button type="submit" class="btn btn-danger">
+                            Views
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>
