@@ -34,6 +34,8 @@ namespace Brainstorm.Areas.Staff.Controllers
             IEnumerable<Idea> objIdeaList = _unitOfWork.Idea.GetAll(includeProperties: "Category,Topic,ApplicationUser");//chỗ này buộc phải có includeProperties để lấy dữ liệu từ bảng Category và Topic liên kết với bảng Idea. Nếu không View này sẽ báo lỗi null.
             IEnumerable<View> objViewList = _unitOfWork.View.GetAll(includeProperties: "ApplicationUser,Idea");//chỗ này buộc phải có includeProperties để lấy dữ liệu từ bảng Category và Topic liên kết với bảng Idea. Nếu không View này sẽ báo lỗi null.
             IEnumerable<React> objReactList = _unitOfWork.React.GetAll(includeProperties: "ApplicationUser,Idea");//chỗ này buộc phải có includeProperties để lấy dữ liệu từ bảng Category và Topic liên kết với bảng Idea. Nếu không View này sẽ báo lỗi null.
+            // THÊM DÒNG NÀY: Lấy tất cả bình luận từ Database, bao gồm cả thông tin người dùng
+            IEnumerable<Comment> objCommentList = _unitOfWork.Comment.GetAll(includeProperties: "ApplicationUser");
             // --- THÊM ĐOẠN NÀY ĐỂ HIỂN THỊ DATA CỦA CÁC MODEL KHÁC LÊN VIEWS TRONG ViewModel ---
             IEnumerable<IdeaVM> ideaVMList = objIdeaList.Select(ideaVMItem => new IdeaVM()//sử dụng phương thức Select để chuyển đổi mỗi phần tử trong objIdeaList thành một đối tượng IdeaVM mới.
             {
@@ -46,7 +48,9 @@ namespace Brainstorm.Areas.Staff.Controllers
                 DislikeCount = objReactList.Count(r => r.IdeaId == ideaVMItem.Id && r.ReactValue == -1),//đếm số lượng react có IdeaId trùng với Id của ideaVMItem trong objIdeaList và có ReactValue bằng -1 (Dislike).
 
                 // Thêm dòng này để tính tổng lượt xem:
-                ViewCount = objViewList.Where(v => v.IdeaId == ideaVMItem.Id).Sum(v => v.VisitTime)//tính tổng số lượt xem bằng cách lọc các view có IdeaId trùng với Id của ideaVMItem trong objIdeaList và sau đó tính tổng giá trị VisitTime của chúng.
+                ViewCount = objViewList.Where(v => v.IdeaId == ideaVMItem.Id).Sum(v => v.VisitTime),//tính tổng số lượt xem bằng cách lọc các view có IdeaId trùng với Id của ideaVMItem trong objIdeaList và sau đó tính tổng giá trị VisitTime của chúng.
+                // THÊM DÒNG NÀY: Lọc ra các bình luận thuộc về ý tưởng này và sắp xếp mới nhất lên đầu
+                Comments = objCommentList.Where(c => c.IdeaId == ideaVMItem.Id).OrderByDescending(c => c.CreatedDate)
             });
 
             // 3. Trả danh sách ViewModel về cho View
@@ -269,6 +273,76 @@ namespace Brainstorm.Areas.Staff.Controllers
             _unitOfWork.Save();
 
             // 4. Tạm thời load lại trang Index sau khi xử lý xong
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [Authorize] // Yêu cầu đăng nhập mới được bình luận
+        public IActionResult AddComment(int IdeaId, string Text)
+        {
+            // Lấy ID của người dùng đang đăng nhập
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+
+            // Kiểm tra xem nội dung bình luận có rỗng không
+            if (!string.IsNullOrWhiteSpace(Text))
+            {
+                Comment newComment = new Comment
+                {
+                    IdeaId = IdeaId,
+                    Text = Text,
+                    ApplicationUserId = claim.Value,
+                    CreatedDate = DateTime.Now
+                };
+
+                _unitOfWork.Comment.Add(newComment);
+                _unitOfWork.Save(); // Lưu vào Database
+            }
+
+            // Tải lại trang Index để hiển thị bình luận mới
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [Authorize]
+        public IActionResult UpdateComment(int commentId, string newText)
+        {
+            // Lấy ID người dùng đang đăng nhập
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+
+            // Tìm bình luận trong cơ sở dữ liệu
+            var comment = _unitOfWork.Comment.GetFirstOrDefault(c => c.Id == commentId);
+
+            // Kiểm tra: Bình luận phải tồn tại, người dùng hiện tại phải là chủ sở hữu, và nội dung mới không được rỗng
+            if (comment != null && comment.ApplicationUserId == claim.Value && !string.IsNullOrWhiteSpace(newText))
+            {
+                comment.Text = newText; // Cập nhật nội dung
+                _unitOfWork.Comment.Update(comment);
+                _unitOfWork.Save(); // Lưu thay đổi
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [Authorize]
+        public IActionResult DeleteComment(int commentId)
+        {
+            // Lấy ID người dùng đang đăng nhập
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+
+            // Tìm bình luận trong cơ sở dữ liệu
+            var comment = _unitOfWork.Comment.GetFirstOrDefault(c => c.Id == commentId);
+
+            // Kiểm tra: Bình luận phải tồn tại và người dùng hiện tại phải là chủ sở hữu
+            if (comment != null && comment.ApplicationUserId == claim.Value)
+            {
+                _unitOfWork.Comment.Remove(comment); // Xóa khỏi bộ nhớ tạm
+                _unitOfWork.Save(); // Lưu thay đổi để xóa hẳn khỏi Database
+            }
+
             return RedirectToAction(nameof(Index));
         }
 

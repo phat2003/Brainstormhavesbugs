@@ -67,9 +67,65 @@
                         </form>
                     }
 
-                    <button class="btn btn-outline-secondary btn-sm" disabled>
-                        <i class="bi bi-chat-dots"></i> Bình luận
+                    <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#commentSection-@idea.idea.Id" aria-expanded="false" aria-controls="commentSection-@idea.idea.Id">
+                        <i class="bi bi-chat-dots"></i> Bình luận (@idea.Comments?.Count())
                     </button>
+
+                    <div class="collapse mt-3 w-100" id="commentSection-@idea.idea.Id">
+
+                        <div class="mb-3" style="max-height: 200px; overflow-y: auto;">
+                            @if (idea.Comments != null && idea.Comments.Any())
+                            {
+                                @foreach (var comment in idea.Comments)
+                                {
+                                    <div class="bg-light p-2 rounded mb-2 border position-relative">
+                                        <strong>@(comment.ApplicationUser != null ? comment.ApplicationUser.UserName : "Ẩn danh")</strong>
+                                        <small class="text-muted ms-2">@comment.CreatedDate.ToString("dd/MM/yyyy HH:mm")</small>
+
+                                        <p class="mb-0 mt-1">@comment.Text</p>
+
+                                        @if (UserManager.GetUserId(User) == comment.ApplicationUserId)
+                                        {
+                                            <div class="position-absolute top-0 end-0 p-2">
+                                                <button class="btn btn-outline-primary btn-sm shadow-sm me-1" type="button" data-bs-toggle="collapse" data-bs-target="#editComment-@comment.Id" title="Sửa">
+                                                    <i class="bi bi-pencil-square"></i> Sửa
+                                                </button>
+
+                                                <form asp-area="Staff" asp-controller="Home" asp-action="DeleteComment" method="post" style="display:inline;">
+                                                    <input type="hidden" name="commentId" value="@comment.Id" />
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm shadow-sm" onclick="return confirm('Bạn có chắc chắn muốn xóa bình luận này không?');" title="Xóa">
+                                                        <i class="bi bi-trash"></i> Xóa
+                                                    </button>
+                                                </form>
+                                            </div>
+
+                                            <div class="collapse mt-3" id="editComment-@comment.Id">
+                                                <form asp-area="Staff" asp-controller="Home" asp-action="UpdateComment" method="post">
+                                                    <input type="hidden" name="commentId" value="@comment.Id" />
+                                                    <div class="input-group input-group-sm">
+                                                        <input type="text" name="newText" class="form-control" value="@comment.Text" required />
+                                                        <button type="submit" class="btn btn-success">Lưu thay đổi</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <p class="text-muted small">Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</p>
+                            }
+                        </div>
+
+                        <form asp-area="Staff" asp-controller="Home" asp-action="AddComment" method="post">
+                            <input type="hidden" name="IdeaId" value="@idea.idea.Id" />
+                            <div class="input-group input-group-sm">
+                                <input type="text" name="Text" class="form-control" placeholder="Viết bình luận của bạn..." required />
+                                <button type="submit" class="btn btn-primary">Gửi</button>
+                            </div>
+                        </form>
+                    </div>
 
                     <form asp-action="Views" method="post">
                         <input type="hidden" name="IdeaId" value="@idea.idea.Id" />
