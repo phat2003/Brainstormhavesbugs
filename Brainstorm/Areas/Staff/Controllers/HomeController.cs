@@ -326,7 +326,7 @@ namespace Brainstorm.Areas.Staff.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        
         public IActionResult DeleteComment(int commentId)
         {
             // Lấy ID người dùng đang đăng nhập
