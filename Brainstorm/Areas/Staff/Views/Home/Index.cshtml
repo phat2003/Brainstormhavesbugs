@@ -4,6 +4,9 @@
 
 <div class="container py-4" style="max-width: 600px;">
     <h2 class="mb-4 text-primary">Bảng Tin Ý Tưởng</h2>
+    <a asp-controller="Home" asp-action="Upsert" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Đóng Góp Ý Tưởng
+    </a>
     @foreach (var idea in Model)
     {
         <div class="card mb-4 shadow-sm">

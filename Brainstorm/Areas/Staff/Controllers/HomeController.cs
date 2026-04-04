@@ -2,6 +2,7 @@
 using Brainstorm.DataAccess.Repository.IRepository;
 using Brainstorm.Models;
 using Brainstorm.Models.ViewModel;
+using Brainstorm.Utility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -56,6 +57,8 @@ namespace Brainstorm.Areas.Staff.Controllers
             // 3. Trả danh sách ViewModel về cho View
             return View(ideaVMList);
         }
+
+        [Authorize]
         public IActionResult Upsert(int? id)
         {
             IdeaVM ideaVM = new IdeaVM();
